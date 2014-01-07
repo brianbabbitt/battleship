@@ -1,5 +1,6 @@
 #!/usr/bin/env python -tt
 
+import re
 import os
 import math
 import time
@@ -207,23 +208,28 @@ def check_ship_health(guess_row, guess_col):
 ##------ input coords and validate ---------##
 def input_coords():
   global guess_row, guess_col
-  
   while True:
     try:
-      guess_row, guess_column = raw_input('Enter row and column: ')
+      user_input = raw_input('Enter row and column: ')
+      p = re.compile('([0-9]*)([a-zA-Z]*)')
+      m = p.match(user_input)
+      group = m.groups()
+      guess_row = group[0]
+      guess_col = group[1]
+      
+      if guess_row.isdigit() is False or guess_col.isalpha() is False:
+        print 'Invalid row or column. For example enter 4C'
+        continue
+      else:
+        guess_row = int(guess_row)-1
+        guess_col = int(row_headers.index(guess_col.upper()))
     except ValueError:
       print 'Invalid row or column. For example enter 4C'
       continue
-      
-    while guess_row.isdigit() is False or guess_col.isalpha() is False:
-      print 'Invalid row or column. For example enter 4C'
-      guess_row, guess_col = raw_input('Enter row and column: ')
-      
-    guess_row = int(guess_row)-1
-    guess_col = int(row_headers.index(guess_col.upper()))
     
     if guess_row >= 0 and guess_row <= len(board):
       if guess_col >= 0 and guess_col <= len(board):
+        logging.debug('Coords are valid on game board')
         return False
       else:
         print 'Column is not on board'
