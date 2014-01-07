@@ -209,7 +209,12 @@ def input_coords():
   global guess_row, guess_col
   
   while True:
-    guess_row, guess_col = raw_input('Enter row and column: ')
+    try:
+      guess_row, guess_column = raw_input('Enter row and column: ')
+    except ValueError:
+      print 'Invalid row or column. For example enter 4C'
+      continue
+      
     while guess_row.isdigit() is False or guess_col.isalpha() is False:
       print 'Invalid row or column. For example enter 4C'
       guess_row, guess_col = raw_input('Enter row and column: ')
