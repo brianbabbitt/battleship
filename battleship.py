@@ -17,9 +17,8 @@ ship_locations = []
 column_headers = list(string.ascii_uppercase)
 
 ##---------- customizable options ----------##
-ships = [2,3,4,3,5]
 num_turns = 10
-difficulty = {'EASY':2.3,'MEDIUM':2.5,'HARD':2.8}
+difficulty = {'EASY':2.2,'MEDIUM':2.5,'HARD':2.7}
 
 ##---------- config parameters -------------##
 
@@ -28,6 +27,7 @@ parser = argparse.ArgumentParser(description='Battleship game! by Brian Babbitt'
 parser.add_argument('-v','--verbose', action='store_true', default=0, help='Change the level of logging')
 parser.add_argument('-d','--difficulty', choices=['easy','medium','hard'], help='Set difficulty level, default is medium')
 parser.add_argument('-m','--mode', choices=['PVE','PVP'], help='Set game mode')
+parser.add_argument('-s','--shipsize', default=[2,3,3,4,5], help='Set number and size of ships')
 
 args = parser.parse_args()
 
@@ -35,6 +35,8 @@ if args.verbose is True:
   logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 else:
   logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+
+ships = eval(str(args.shipsize))
 
 ##---------- pick random coords ------------##
 def random_row(board):
@@ -66,7 +68,7 @@ def base_26_converter(column):
 
 ##------ determine size of board -----------##
 def create_blank_game_board(level=difficulty['MEDIUM']):
-  board_size = int(math.pow(max(ships),level)) ## start at max ship size
+  board_size = int(math.pow(max(ships),level))
   logging.debug('Starting number of squares on board is: {}'.format(board_size))
   logging.debug('Starting number of ship segments is: {}'.format(sum(ships)))
   
