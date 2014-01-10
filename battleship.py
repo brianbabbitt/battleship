@@ -125,7 +125,9 @@ def manually_place_ship(ship_locations, ship_size, ship_number):
   ship_segments = ship_size
   ship_locations.append({})
   while ship_segments != 0:
-    print 'Number of remaining segments to place: {}'.format(ship_segments)
+    os.system('cls' if os.name=='nt' else 'clear')
+    print_board(ship_board_2)
+    print 'Number of remaining segments to place: {}\n'.format(ship_segments)
 
     ## first segment sets starting point
     if ship_segments == ship_size:
@@ -135,6 +137,7 @@ def manually_place_ship(ship_locations, ship_size, ship_number):
       temp_col = guess_col
       if check_ship(guess_row, guess_col) is False:
         ship_locations[ship_number][0] = [guess_row, guess_col]
+        ## add location to ship_board
         ship_segments -= 1
         continue
       else:
@@ -156,6 +159,7 @@ def manually_place_ship(ship_locations, ship_size, ship_number):
         
       if check_ship(temp_row2, temp_col2) is False:
         ship_locations[ship_number][1] = [temp_row2, temp_col2]
+        ## add location to ship_board
         ship_segments -= 1
         logging.debug('Ships orientation is {}'.format(direction))
         continue
@@ -186,12 +190,14 @@ def manually_place_ship(ship_locations, ship_size, ship_number):
         ship_locations[ship_number][len(ship_locations[ship_number])] = [temp_row3, temp_col3]
         temp_col2 = temp_col3
         temp_row2 = temp_row3
+        ## add location to ship_board
         ship_segments -= 1
         continue
       elif check_ship(temp_row3, temp_col3) is True:
         loop_count += 1
         print 'Invalid coordinates. You have {} more attempts until this ship placement will be reset'.format(loop_count)
         if loop_count == 3:
+          ## remove locations for this ship from ship_board
           ship_segments = ship_size
           loop_count = 0
           logging.debug('Will reset and pick new coords for ship.')
