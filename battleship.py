@@ -11,9 +11,14 @@ from random import choice
 from random import randint
 
 ##------- initialize game variables --------##
-board = []
-ship_board =[]
-ship_locations = []
+board_1 = []
+ship_board_1 =[]
+ship_locations_1 = []
+
+board_2 = []
+ship_board_2 =[]
+ship_locations_2 = []
+
 column_headers = list(string.ascii_uppercase)
 
 ##---------- customizable options ----------##
@@ -81,8 +86,10 @@ def create_blank_game_board(level=difficulty['MEDIUM']):
   logging.debug('Final board length is: {}'.format(board_size))
   
   for x in range(board_size):
-    board.append(["O"] * board_size)
-    ship_board.append(["0"] * board_size)
+    board_1.append(["O"] * board_size)
+    board_2.append(["O"] * board_size)
+    ship_board_1.append(["0"] * board_size)
+    ship_board_2.append(["0"] * board_size)
 
 ##---------- print game board --------------##
 def print_board(board):
@@ -103,17 +110,98 @@ def print_board(board):
 ##------- check ship placement -------------##
 def check_ship(guess_row, guess_col):
   logging.debug('Checking if ship present at {},{}'.format(guess_row, guess_col))
-  for x in range(len(ship_locations)):
-    for y in ship_locations[x]:
-      if ship_locations[x][y] == [guess_row, guess_col]:
+  for x in range(len(ship_locations_1)):
+    for y in ship_locations_1[x]:
+      if ship_locations_1[x][y] == [guess_row, guess_col]:
         logging.debug('Ship is already present at this location ({},{})'.format(guess_row, guess_col))
         return True
   
   logging.debug('Location is available ({},{})'.format(guess_row, guess_col))
   return False
 
+##-------- manually place ship -------------##
+def manually_place_ship(ship_locations, ship_size, ship_number):
+  loop_count = 0
+  ship_segments = ship_size
+  ship_locations.append({})
+  while ship_segments != 0:
+    print 'Number of remaining segments to place: {}'.format(ship_segments)
+
+    ## first segment sets starting point
+    if ship_segments == ship_size:
+      print 'Enter first coordinates for ship.'
+      input_coords()
+      temp_row = guess_row
+      temp_col = guess_col
+      if check_ship(guess_row, guess_col) is False:
+        ship_locations[ship_number][0] = [guess_row, guess_col]
+        ship_segments -= 1
+        continue
+      else:
+        print 'Coordinates were not available, please try again.'
+        continue
+
+    ## second segment determines orientation
+    elif ship_segments == (ship_size - 1):
+      print 'Place second segment.'
+      
+      input_coords()
+      temp_col2 = guess_col
+      temp_row2 = guess_row
+
+      if guess_row == temp_row:
+        direction = 'horizontal'
+      else:
+        direction = 'vertical'
+        
+      if check_ship(temp_row2, temp_col2) is False:
+        ship_locations[ship_number][1] = [temp_row2, temp_col2]
+        ship_segments -= 1
+        logging.debug('Ships orientation is {}'.format(direction))
+        continue
+      elif check_ship(temp_row2, temp_col2) is True:
+        print 'Coordinates are not available, please try again.'
+        continue
+
+    ## all other subsequent segments
+    else:
+      print 'Place next segment.'
+      input_coords()
+      
+      if direction == 'horizontal':
+        logging.debug('previous column: {} first column: {}'.format(temp_col2,temp_col))
+        if guess_row != temp_row2:
+          print 'Invalid coordinates. Please choose a value that is in the same horizontal direction as your ship.'
+          continue
+      if direction == 'vertical':
+        logging.debug('previous_row: {} first row: {}'.format(temp_row2,temp_row))
+        if guess_col != temp_col2:
+          print 'Invalid coordinates. Please choose a value that is in the same horizontal direction as your ship.'
+          continue
+      
+      temp_col3 = guess_col
+      temp_row3 = guess_row
+      
+      if check_ship(temp_row3, temp_col3) is False:
+        ship_locations[ship_number][len(ship_locations[ship_number])] = [temp_row3, temp_col3]
+        temp_col2 = temp_col3
+        temp_row2 = temp_row3
+        ship_segments -= 1
+        continue
+      elif check_ship(temp_row3, temp_col3) is True:
+        loop_count += 1
+        print 'Invalid coordinates. You have {} more attempts until this ship placement will be reset'.format(loop_count)
+        if loop_count == 3:
+          ship_segments = ship_size
+          loop_count = 0
+          logging.debug('Will reset and pick new coords for ship.')
+          ship_locations[ship_number].clear()
+          continue
+        continue
+    print 'Finished placing coordinates for ship {}'.format(ship_number)
+
 ##----------- auto place ship --------------##
-def auto_place_ship(ship_size, ship_number):
+def auto_place_ship(ship_locations, ship_size, ship_number):
   logging.debug('Stats for ship #{} - ship size: {}'.format(ship_number+1, ship_size))
   start = time.clock()
   ship_segments = ship_size
@@ -126,8 +214,8 @@ def auto_place_ship(ship_size, ship_number):
     
     ## first segment sets starting point
     if ship_segments == ship_size:
-      temp_row = random_row(board)
-      temp_col = random_col(board)
+      temp_row = random_row(board_1)
+      temp_col = random_col(board_1)
       if check_ship(temp_row, temp_col) is False:
         ship_locations[ship_number][0] = [temp_row,temp_col]
         ship_segments -= 1
@@ -142,7 +230,7 @@ def auto_place_ship(ship_size, ship_number):
       temp_point = choice([{'dir':'row','loc':temp_row-1},{'dir':'row','loc':temp_row+1},{'dir':'col','loc':temp_col-1},{'dir':'col','loc':temp_col+1}])
       logging.debug('Random direction and new location: {} {}'.format(temp_point['dir'],temp_point['loc']))
       logging.debug('Checking if coords are on board...')
-      if temp_point['loc'] >= 0 and temp_point['loc'] < len(board):
+      if temp_point['loc'] >= 0 and temp_point['loc'] < len(board_1):
         logging.debug('Coords are valid on board')
         if temp_point['dir'] == 'col':
           temp_col2 = temp_point['loc']
@@ -187,7 +275,7 @@ def auto_place_ship(ship_size, ship_number):
         else:
           temp_point = choice([{'dir':'row','loc':temp_row2-1},{'dir':'row','loc':temp_row+1}])
         logging.debug('temp_point: {}'.format(temp_point))
-      if temp_point['loc'] >= 0 and temp_point['loc'] < len(board):
+      if temp_point['loc'] >= 0 and temp_point['loc'] < len(board_1):
         if temp_point['dir'] == 'col':
           temp_col3 = temp_point['loc']
           temp_row3 = temp_row2
@@ -217,7 +305,7 @@ def auto_place_ship(ship_size, ship_number):
   logging.debug('Time to place ship: {}ms'.format((time.clock() - start)*1000))
 
 ##---------- check ship health -------------##
-def check_ship_health(guess_row, guess_col):
+def check_ship_health(ship_board, guess_row, guess_col):
   logging.debug('The ship hit has {} segments left'.format(ships[int(ship_board[guess_row][guess_col])-1]))
   ships[int(ship_board[guess_row][guess_col])-1] -= 1
   if ships[int(ship_board[guess_row][guess_col])-1] == 0:
@@ -229,7 +317,8 @@ def check_ship_health(guess_row, guess_col):
 
 ##------ input coords and validate ---------##
 def input_coords():
-  global guess_row, guess_col
+  global guess_col, guess_row
+
   while True:
     try:
       user_input = raw_input('Enter row and column: ')
@@ -249,8 +338,8 @@ def input_coords():
       print 'Invalid row or column. For example enter 4C'
       continue
     
-    if guess_row >= 0 and guess_row <= len(board):
-      if guess_col >= 0 and guess_col <= len(board):
+    if guess_row >= 0 and guess_row <= len(board_1):
+      if guess_col >= 0 and guess_col <= len(board_1):
         logging.debug('Coords are valid on game board')
         return False
       else:
@@ -270,17 +359,31 @@ def play_game():
   
   ##---- place all ships and map to board ----##
   for x in range(len(ships)):
-     logging.debug("{} out of {} ships have been placed".format(x,len(ships)))
-     auto_place_ship(ships[x],x)
-     
-     for y in range(len(ship_locations[x])):
-      ship_board[ship_locations[x][y][0]][ship_locations[x][y][1]] = str(x+1)
+    logging.debug("{} out of {} ships have been placed".format(x,len(ships)))
+    if game_mode == 'PVE':
+      auto_place_ship(ship_locations_1, ships[x], x)
+      manually_place_ship(ship_locations_2, ships[x], x)
+    elif game_mode == 'PVP':
+      manually_place_ship(ship_locations_1, ships[x], x)
+      manually_place_ship(ship_locations_2, ships[x], x)
+    
+    for y in range(len(ship_locations_1[x])):
+      ship_board_1[ship_locations_1[x][y][0]][ship_locations_1[x][y][1]] = str(x+1)
+    print 'ship board 1'
+    print_board(ship_board_1)
+
+    for y in range(len(ship_locations_2[x])):
+      ship_board_2[ship_locations_2[x][y][0]][ship_locations_2[x][y][1]] = str(x+1)
+    print 'ship board 2'
+    print_board(ship_board_2)
+    #for y in range(len(ship_locations_2[x])):
+      #ship_board_2[ship_locations_2[x][y][0]][ship_locations_2[x][y][1]] = str(x+1)   
   
   logging.debug('Time to place all ships: {}ms'.format((time.clock() - start)*1000))
   #print_board(ship_board) ##--- CHEATING! Prints game board with ship locations ----##
   
   print "\nLet's play Battleship!\n"
-  print_board(board)
+  print_board(board_1)
   
   while num_turns != 0:
     
@@ -288,26 +391,27 @@ def play_game():
     print "\n{} remaining turns \n".format(num_turns)
     
     input_coords()
+    os.system('cls' if os.name=='nt' else 'clear')
     
-    if(board[guess_row][guess_col] == 'X' or board[guess_row][guess_col] == '*' ):
+    if(board_1[guess_row][guess_col] == 'X' or board_1[guess_row][guess_col] == '*' ):
       print "\nYou guessed that one already."
       ship_hit = False
     
     else:
-      for x in range(len(ship_locations)):
-        if [guess_row, guess_col] in ship_locations[x].values():
+      for x in range(len(ship_locations_1)):
+        if [guess_row, guess_col] in ship_locations_1[x].values():
           print '\nHit!'
-          check_ship_health(guess_row, guess_col)
-          board[guess_row][guess_col] = "*"
+          check_ship_health(ship_board_1, guess_row, guess_col)
+          board_1[guess_row][guess_col] = "*"
           ship_hit = True
           break
     
     if ship_hit is None:
       print '\nMiss!'
-      board[guess_row][guess_col] = "X"
+      board_1[guess_row][guess_col] = "X"
       num_turns -= 1
     
-    print_board(board)
+    print_board(board_1)
   
   print 'Game Over\n'
   print 'Here\'s where all the ships were\n'
